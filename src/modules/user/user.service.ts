@@ -17,14 +17,16 @@ export class UserService {
             throw new Error(e)
         }
     }
-    async findUserbyEmail (email: string): Promise<User>{
-        try{
-        return this.userRepository.findOne({where: {email: email}})
+    async findUserByEmail(email: string): Promise<User> {
+        try {
+          return this.userRepository.findOne({ where: { email: email }, include: {
+              model: WatchList,
+              required: false,
+            } });
+        }catch (e) {
+          throw new Error(e)
         }
-        catch (e){
-            throw new Error(e)
-        }
-    }
+      }
 
     async createUser(dto: CreateUserDTO): Promise<CreateUserDTO> {
         try{
@@ -45,6 +47,7 @@ export class UserService {
 
     async publicUser(email:string): Promise<User> {
         try{
+            
         return this.userRepository.findOne({where: {email}, attributes: {exclude: ['password']},
             include: {
                 model: WatchList,
@@ -55,15 +58,14 @@ export class UserService {
             throw new Error(e)
         }
     }
-    async updateUser (email: string, dto: UpdateUserDto): Promise<UpdateUserDto>{
-        try{
-        await this.userRepository.update(dto, {where: {email}})
-        return dto
+    async updateUser (userId: number, dto: UpdateUserDto): Promise<UpdateUserDto> {
+        try {
+          await this.userRepository.update(dto, {where: {id: userId}})
+          return dto
+        }catch (e) {
+          throw new Error(e)
         }
-        catch(e){
-            throw new Error(e)
-        }
-    }
+      }
     async deleteUser (email: string): Promise<boolean>{
         try{
         await this.userRepository.destroy({where: {email}})
