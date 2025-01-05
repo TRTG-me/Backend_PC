@@ -1,10 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './models/user.model';
 import * as bcrypt from 'bcrypt'
-import { CreateUserDTO, UpdateUserDto } from './dto';
-import { AppError } from 'src/common/constants/errors';
+import { CreateUserDTO, UpdatePasswordDTO, UpdateUserDto } from './dto';
 import { WatchList } from '../watchlist/models/watchlist.model';
+import { IsBtcAddress } from 'class-validator';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { AppError } from 'src/common/constants/errors';
 
 @Injectable()
 export class UserService {
@@ -20,6 +22,17 @@ export class UserService {
     async findUserByEmail(email: string): Promise<User> {
         try {
           return this.userRepository.findOne({ where: { email: email }, include: {
+              model: WatchList,
+              required: false,
+            } });
+        }catch (e) {
+          throw new Error(e)
+        }
+      }
+
+      async findUserById(id: number): Promise<User> {
+        try {
+          return this.userRepository.findOne({ where: { id }, include: {
               model: WatchList,
               required: false,
             } });
@@ -66,6 +79,23 @@ export class UserService {
           throw new Error(e)
         }
       }
+
+      async updatePassword (userId: number, dto: UpdatePasswordDTO): Promise<any> {
+        try {
+            const {password} = await this.findUserById(userId)
+            const currentPassword = await bcrypt.compare(dto.oldPassword, password)
+            if (!currentPassword) return new BadRequestException(AppError.WRONG_DATA)
+                const newPassword = await this.hashPassword(dto.newPassword)
+                const data = {
+                password: newPassword
+            }
+          return this.userRepository.update(data, {where: {id: userId}})
+          
+        }catch (e) {
+          throw new Error(e)
+        }
+      }
+
     async deleteUser (email: string): Promise<boolean>{
         try{
         await this.userRepository.destroy({where: {email}})
