@@ -19,18 +19,17 @@ export class AuthController {
         register (@Body() dto: CreateUserDTO): Promise<CreateUserDTO> {
             return this.authService.registerUsers(dto)
         }
-    @ApiTags('API')
-    @ApiResponse({status: 200, type: AuthUserResponse    })
-        @Post('login')
-        login (@Body() dto:UserLoginDTO): Promise<AuthUserResponse | BadRequestException>{
-            return this.authService.loginUser(dto)
+        
+        @ApiTags('API')
+        @Post("login")
+        login(@Body() dto: UserLoginDTO): Promise<AuthUserResponse | BadRequestException> {
+          return this.authService.loginUser(dto);
         }
 
     @UseGuards(JwtAuthGuard)
     @Get('get-public-user-info')
     getPublicUserInfo (@Req() request) {
         const user = request.user
-        console.log(user)
         return this.userService.publicUser(user.email)
     }
     }

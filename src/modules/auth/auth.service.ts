@@ -24,19 +24,15 @@ export class AuthService {
     }
     }
 
-    async loginUser(dto: UserLoginDTO): Promise<AuthUserResponse | BadRequestException>{
+    async loginUser (dto: UserLoginDTO): Promise<AuthUserResponse> {
         try {
-            const existUser = await this.userService.findUserByEmail(dto.email)
-        if(!existUser) return new BadRequestException(AppError.USER_NOT_EXIST)
-        const validatePassword = await bcrypt.compare(dto.password, existUser.password)
-        if (!validatePassword) return new BadRequestException(AppError.WRONG_DATA)
-     
-        const user = await this.userService.publicUser(dto.email)
-        const token = await this.tokenService.generateJwtToken(user)
-       return {user, token } 
+          const existUser = await this.userService.findUserByEmail(dto.email)
+          if (!existUser) throw new BadRequestException(AppError.USER_NOT_EXIST)
+          const validatePassword = await bcrypt.compare(dto.password, existUser.password)
+          if (!validatePassword) throw new BadRequestException(AppError.WRONG_DATA)
+          return this.userService.publicUser(dto.email)
+        }catch (e) {
+          throw new Error(e)
         }
-        catch (e){
-            throw new Error(e)
-        }
-    }
+      }
 }

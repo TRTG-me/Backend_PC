@@ -7,10 +7,14 @@ import { WatchList } from '../watchlist/models/watchlist.model';
 import { IsBtcAddress } from 'class-validator';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AppError } from 'src/common/constants/errors';
+import { AuthUserResponse } from '../auth/response';
+import { TokenService } from '../token/token.service';
 
 @Injectable()
 export class UserService {
-    constructor(@InjectModel(User) private readonly userRepository: typeof User){}
+    constructor(@InjectModel(User) private readonly userRepository: typeof User,
+                private readonly tokenService: TokenService
+  ){}
 
     async hashPassword (password: string): Promise<string>{
         try{
@@ -58,18 +62,21 @@ export class UserService {
     }
     }
 
-    async publicUser(email:string): Promise<User> {
-        try{
-            
-        return this.userRepository.findOne({where: {email}, attributes: {exclude: ['password']},
-            include: {
-                model: WatchList,
-                required: false
-            }
-        })}
-        catch (e){
-            throw new Error(e)
-        }
+    async publicUser (email: string): Promise<AuthUserResponse>{
+      try {
+        const user = await this.userRepository.findOne({
+          where: {email},
+          attributes: {exclude: ['password']},
+          include: {
+            model: WatchList,
+            required: false
+          }
+        })
+        const token = await this.tokenService.generateJwtToken(user)
+        return { user, token}
+      }catch (e) {
+        throw new Error(e)
+      }
     }
     async updateUser (userId: number, dto: UpdateUserDto): Promise<UpdateUserDto> {
         try {
